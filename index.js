@@ -259,14 +259,24 @@ async function run() {
             //     return res.status(403).send({ message: 'forbidden access' })
             // }
             const query = { email: email };
-            const user = await userCollection.findOne(query);
+            const user = await invoiceCollection.findOne(query);
             let premium = false;
             if (user) {
                 premium = user?.order === 'granted';
             }
             res.send({ premium });
         })
-
+        app.patch('/invoice/request/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const setRequest = {
+                $set: {
+                    order: 'granted'
+                }
+            }
+            const result = await invoiceCollection.updateOne(filter, setRequest);
+            res.send(result);
+        })
       
         //check admin status
         app.get('/admin-stats', async (req, res) => {
