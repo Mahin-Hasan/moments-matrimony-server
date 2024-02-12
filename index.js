@@ -105,10 +105,43 @@ async function run() {
             res.send(result);
         })
         //Biodata api used in user dashboard
-        app.get('/biodatas', async (req, res) => { //add verification later
-            const result = await biodatasCollection.find().toArray();
-            res.send(result);
-        })
+       
+        app.get('/biodatas', async (req, res) => {
+            try {
+                const filter = req.query;
+
+                // Convert filter values to numbers
+                const minAge = +filter.minValue;
+                const maxAge = +filter.maxValue;
+                const searchedUser = filter.name;
+                const searchedGender = filter.gender;
+                console.log(filter);
+                console.log(searchedGender);
+                const query = {};
+                if (!isNaN(minAge) && !isNaN(maxAge)) {
+                    // Only apply age range filter when both minValue and maxValue are provided
+                    query.yourAge = { $gte: minAge, $lte: maxAge };
+                }
+                if (!isNaN(minAge) && !isNaN(maxAge)) {
+                    // Only apply age range filter when both minValue and maxValue are provided
+                    query.yourAge = { $gte: minAge, $lte: maxAge };
+                }
+                if (searchedUser.length > 1) {
+                    query.yourName = { $regex: searchedUser, $options: 'i' };
+                }
+                if (searchedGender) {
+                    query.biodataType = { $regex: searchedGender, $options: 'i' };
+                }
+                const options = {};
+
+                const result = await biodatasCollection.find(query, options).toArray();
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send('Internal Server Error');
+            }
+        });
+
         app.get('/biodatas/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -277,7 +310,8 @@ async function run() {
             const result = await invoiceCollection.updateOne(filter, setRequest);
             res.send(result);
         })
-      
+
+
         //check admin status
         app.get('/admin-stats', async (req, res) => {
             const users = await usersCollection.estimatedDocumentCount();
